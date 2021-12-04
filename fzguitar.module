@@ -1,0 +1,399 @@
+<?php
+require "fzguitar.inc";
+require "fzguitar_admin.inc";
+
+function fzguitar_pitch(){
+    drupal_add_js(drupal_get_path('module','fzguitar').'/fzguitar.js');
+    $form = array();
+    //
+    $fzgt_header = array(
+      'id'    => array('data' => t("ID")   , 'field'=> 'g.id'),
+      'descr' => array('data' => t("descr"), 'field'=> 'g.descr'),
+      'pitch' => array('data' => t("pitch"), 'field'=> 'g.pitch'),
+    );
+
+    $rs = db_select("fzguitar_pitch","g")
+     ->fields('g',array("id","descr","pitch"))
+     ->extend('PagerDefault')
+     ->limit(10)
+     ->extend("TableSort")
+     ->orderByHeader($fzgt_header)
+     ->execute();
+    ;
+
+    $fzgt_options = array();
+    
+    while ($row =$rs->fetchAssoc() ){
+      $fzgt_options[$row['id']] = array(
+        'id'    => $row['id'],
+        'descr' => $row['descr'],
+        'pitch' => $row['pitch'],
+      );
+    }
+    
+    $form['pitch_table'] = array(
+      '#title' => t("Table of pitch"),
+      "#type" => 'tableselect',
+      '#header' => $fzgt_header,
+      '#options' => $fzgt_options,
+      '#empty' => t('No content available'),
+      '#js_select property' => FALSE,
+      '#multiple'=>FALSE,
+      '#title_display' => t("Table of pitch"),
+    );
+    
+    $form['pager'] = array(
+      '#markup' => theme('pager'),
+    );
+     
+    $form['pitch_ID'] = array(
+      '#type'       => 'textfield',
+      '#title'      => t('pitch_ID'),
+      '#description' => t('Identifies the record'),
+    );
+    
+    $form['pitch_descr'] = array(
+      '#type'          => 'textfield',
+      '#title'         => t('pitch_descr'),
+      '#description' => t('Description of instrument in text'),
+    );
+     
+    $form['pitch_pitch'] = array(
+      '#type'  => 'textfield',
+      '#title' => 'pitch_pitch',
+      '#description' => t('The tunes of strings separately with "|" sign.'),
+    );
+    
+    $form['pitch_submit'] = array(
+      '#title' => 'pitch_submit',
+      '#name'  => t('Submit'),
+      '#value' => t('record').' '. t('submit'),
+      '#type'  => 'submit',
+    );
+    
+    $form['pitch_delete'] = array(
+      '#type'  => 'submit',
+      '#name'  => 'pitch_delete',
+      '#value' => t('Delete selected pitch'),
+      '#submit'=> array('fzguitar_pitch_record_delete'),
+    );
+    return $form;
+}
+/**
+ *
+ * @return $form;
+ */
+function fzguitar_chord(){
+    drupal_add_js(drupal_get_path('module','fzguitar').'/fzguitar.js');
+    $form = array();
+    $fzguitar_header = array(
+        //  'ID'     => array('data' => t("ID")           , 'field'=> 'g.id'),
+        'pitchID'=> array('data' => t("Tunes ID")     , 'field'=> 'g.pitchID'),
+        'name'   => array('data' => t("Name of chord"), 'field'=> 'g.name'),
+        'tones'  => array('data' => t("Tones ")       , 'field'=> 'g.tones'),
+    );
+    
+    if(!empty($_REQUEST['fzguitar_chord_length'])){
+        variable_set('fzguitar_chord_length', $_REQUEST['fzguitar_chord_length']);
+        $fzguitar_chord_length = $_REQUEST['fzguitar_chord_length'];
+    }else{
+        $fzguitar_chord_length =  variable_get('fzguitar_chord_length',10);
+    }
+        
+    if($fzguitar_chord_length == 'all'){
+        $rs = db_select("fzguitar","g")
+        ->fields('g',array("ID","pitchID","name","tones"))
+        ->extend('PagerDefault')
+        ->limit(100000)
+        ->extend("TableSort")
+        ->orderByHeader($fzguitar_header)
+        ->execute();
+    }else{
+        $rs = db_select("fzguitar","g")
+        ->fields('g',array("ID","pitchID","name","tones"))
+        ->extend('PagerDefault')
+        ->limit($fzguitar_chord_length)
+        ->extend("TableSort")
+        ->orderByHeader($fzguitar_header)
+        ->execute();
+    }
+    
+    $fzguitar_options = array();
+    while ($row =$rs->fetchAssoc()){
+        $fzguitar_options[$row['ID']] =array(
+            // 'ID'      => $row['ID'],
+            'pitchID' => $row['pitchID'],
+            'name'    => $row['name'],
+            'tones'   => $row['tones'],
+        );
+    }
+
+    $form['fzguitar_chord_length'] = array(
+        '#type'          => 'select',
+        '#title'         => t('Length of list'),
+        '#description'   => t('Length of list of chords'),
+        '#options'       => array('10'=>10, '20'=>20, '50' => 50, 'all'=>'all'),
+        '#default_value' => $fzguitar_chord_length,
+        '#required'      => TRUE,
+        '#attributes'    => array('onchange' => 'this.form.submit();'),
+        '#weight'        => 100,
+    );
+        
+    $form['chords_table'] = array(
+        '#title'              => t("Table of chords"),
+        "#type"               => 'tableselect',
+        '#header'             => $fzguitar_header,
+        '#options'            => $fzguitar_options,
+        '#empty'              => t('No content available'),
+        '#js_select property' => FALSE,
+        '#multiple'           => FALSE,
+        '#title_display'      => t("Table of chords"),
+        '#weight'             => 110,
+    
+    );
+
+    $form['pager'] = array(
+        '#markup' => theme('pager')
+    );
+    $form['chords_new'] = array(
+        '#title'      => 'new',
+        '#name'       => t('chords_new'),
+        '#value'      => t('new').' '. t('chord'),
+        '#type'       => 'button',
+        '#attributes' => array('onclick' => 'fzguitar_new_chord(); return false;'),
+        '#weight    ' => 112,
+    );
+    
+    $form['chords_ID'] = array(
+        '#type'        => 'textfield',
+        '#title'       => t('chords_ID'),
+        '#description' => t('Identifies the record'),
+        '#weight'      => 116,
+    );
+    
+    $form['chords_PitchID'] = array(
+        '#type'       => 'select',
+        '#title'      => t('PitchID'),
+        '#options'    => _fzguitar_load_pitches(),
+        '#default'    => '',
+        '#description'=> t('Reference to the Pitch of other table record ID'),
+        '#weight'     => 118,
+    );
+    
+    $form['chords_name'] = array(
+        '#type'        => 'textfield',
+        '#title'       => t('name'),
+        '#description' => t('Human readable name of chord'),
+        '#weight'      => 120,
+    );
+    $form['chords_tones'] = array(
+        '#type'        => 'textfield',
+        '#title'       => t('chords_tones'),
+        '#description' => t('The tones of chord separately with "|" character'),
+        '#weight'      => 122,
+    );
+    
+    $form['chords_submit'] = array(
+        '#title'  => 'chords_submit',
+        '#name'   => t('chords_submit'),
+        '#value'  => t('record').' '. t('submit'),
+        '#type'   => 'submit',
+        '#submit' => array('fzguitar_chords_record_save'),
+        '#weight' => 124,
+    );
+    
+    $form['chords_delete'] = array(
+        '#type'   => 'submit',
+        '#name'   => t('chords_delete'),
+        '#value'  => t('Delete selected chord'),
+        '#submit' => array('fzguitar_chords_record_delete'),
+        '#weight' => 126,
+    );
+    return $form;
+}
+/**
+ * Load a record of pitch table
+ */
+function fzguitar_pitch_record_load(){
+    $id = $_REQUEST["id"];
+    if(!empty($id)){
+        $rs = db_select('fzguitar_pitch','p')
+        ->fields('p',array('ID','descr','pitch'))
+        ->condition('ID',$id,'=')
+        ->execute();
+        $row = $rs->fetchAssoc();
+    }else{
+        $row = array("ID" => "unknown");
+    }
+    $json = json_encode($row);
+    die($json);
+}
+
+/**
+ * query the names of pitches
+ * @return array of names of pitches
+ */
+function _fzguitar_load_pitches(){
+    $rs = db_select('fzguitar_pitch','p')
+    ->fields('p',array('ID','descr','pitch'))
+    ->orderBy("ID")
+    ->execute();
+    $pitches = array();
+    while($row = $rs->fetchAssoc()){
+        $pitches[$row["ID"]]= $row["ID"];
+    }
+    return $pitches;
+}
+
+/**
+ * Load a record of chord table
+ */
+function fzguitar_chords_record_load(){
+    $id = $_REQUEST["id"];
+    
+    if(!empty($id)){
+
+        $rs = db_select('fzguitar_pitch','p')
+            ->fields('p',array('ID','descr','pitch'))
+            ->orderBy("ID")
+            ->execute();
+        
+        $r="";
+        while($row=$rs->fetchAssoc()){
+            $r.="|".$row["ID"];
+        }
+        $r = substr($r,1);
+        
+        if($id == "-1"){
+            $q = db_select('fzguitar','g');
+            $q->addExpression("MAX(ID)+1","ID");
+            $row = $q->execute()->fetchAssoc();
+            $row["tones"] = $row["name"] = $row["pitchID"] = " ";
+        }else{
+            $rs = db_select('fzguitar','p')
+            ->fields('p',array('ID','pitchID','name','tones'))
+            ->condition('ID',$id,'=')
+            ->execute();
+            $row = $rs->fetchAssoc();
+        }
+        $row["pitches"] = $r;
+        
+        if(empty($row)){
+            $row = array("ID" => "unknown","pitchID" =>"", "name" =>"", "tones"=>"");
+        }
+
+    }else{
+        $row = array("ID" => "unknown","pitchID" =>"", "name" =>"", "tones"=>"");
+    }
+    
+    $json = json_encode($row);
+    die($json);
+}
+/**
+ * Modify a record or save the new record
+ * @param unknown $form
+ * @param unknown $form_state
+ */
+function fzguitar_pitch_record_save($form, $form_state){
+    $v = $form_state['values'];
+    $db = -1;
+    if(isset($v['chords_table']) && !empty($v['chords_table']) ){
+        $row['ID']    = $v['pitch_ID'];
+        $row['descr'] = $v['pitch_descr'];
+        $row['pitch'] = $v['pitch_pitch'];
+        drupal_write_record('fzguitar_pitch',$row);
+    }
+}
+
+/**
+ * Modify a record or save the new record
+ * @param unknown $form
+ * @param unknown $form_state
+ */
+function fzguitar_chords_record_save($form, $form_state){
+    $v = $form_state['values'];
+    
+    $db = -1;
+    $rs = db_select('fzguitar_pitch','p')
+            ->fields('p',array('ID'))
+            ->condition('ID',$v['chords_PitchID'],'=')
+            ->execute();
+    //If exists the instrument and pitch
+    if(count($rs) ==1) {
+        if(isset($v['chords_table']) && !empty($v['chords_table']) ){
+            $row['pitchID'] = $v['chords_PitchID'];
+            $row['name']    = $v['chords_name'];
+            $row['tones']   = $v['chords_tones'];
+            drupal_write_record('fzguitar',$row);
+        }
+    }
+}
+/**
+ *
+ * @param unknown $form
+ * @param unknown $form_state
+ */
+function fzguitar_chords_record_delete($form, $form_state){
+    $v = $form_state['values'];
+    $db = -1;
+    if(isset($v['chords_table']) && !empty($v['chords_table']) ){
+        $db= db_delete('fzguitar')
+             ->condition('ID',$v['chords_table'])
+             ->execute();
+    }
+}
+
+function fzguitar_pitch_record_delete($form, $form_state){
+    $v = $form_state['values'];
+    
+    $db = -1;
+    if(isset($v['pitch_table']) && !empty($v['pitch_table']) ){
+        $db= db_delete('fzguitar_pitch')
+            ->condition('ID',$v['pitch_table'])
+            ->execute();
+    }
+}
+
+/**
+ * Tips of using filter
+ */
+function fzguitar_filter_tips($filter, $format, $long) {
+			return t('The FZ Guitar change the guitar filter and shows the neck of guitar.');
+}
+
+
+/**
+ * Ez vegzi [guitar|.....] tag behelyettesiteset.
+ *
+ *  [guitar|x|3|2|4|1|x] - A taxonómia kifejezéek felsorolva (,vel elválasztva)
+ * Egy lapon tobb elem is lehet
+
+ * @return mixed
+ */
+function fzguitar_substitute($txt, $filter) {
+
+	$db = preg_match("/(\[)guitar(\|)([^]]*)(\])/i" , $txt, $match); //Guitar
+	
+	if( $db === 0 || ! $db || strstr($_GET['q'], 'edit')){
+	  return $txt;
+	}
+	if(variable_get('menu_rebuild_needed', TRUE)){
+	    menu_rebuild();
+	    variable_set("menu_rebuild_needed", false);
+	}
+	
+	$G = new FZGuitar();
+	$m = $match[0];
+  while ($db > 0 ){
+    $m = str_replace(array('[guitar|',']'),"",$m);
+    //create an array from parameters
+    $out = $G->Shows($m);
+   
+    $txt = preg_replace("/(\[)guitar(\|)([^]]*)(\])/i" , $out ,$txt, 1); //Replace
+    $db  = preg_match("/(\[)guitar(\|)([^]]*)(\])/i" , $txt, $match);
+    if($db>0){
+        $m   = $match[0];
+    }
+  }
+  return $txt;
+}

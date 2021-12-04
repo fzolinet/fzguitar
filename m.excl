@@ -1,0 +1,9 @@
+.bat
+.excl
+.bak
+.make
+fzguitar_
+*.zip
+*.tar.gz
+m.bat
+m7.php

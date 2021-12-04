@@ -1,0 +1,18 @@
+; $Id: fz_guitar.info$
+name = FZ guitar
+description = "Guitar accords and tones on the neck of guitar"
+
+core = 7.x
+package = FZ
+project = fzguitar
+configure = admin/config/fz/fzguitar
+
+files[] = fzguitar.module
+files[] = fzguitar.inc
+files[] = fzguitar_admin.inc
+files[] = fzguitar_table.php
+files[] = fzguitar_pitch_table.php
+
+; Information added by drupal.org packaging script on 2014-02-27
+version = "7.x-1.5"
+datestamp = "1592251731"

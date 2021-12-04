@@ -1,0 +1,47 @@
+History
+~~~~~~~
+
+Todo:
+~~~~~
+ 
+Bug:
+~~~
+- save the new chord. Little bit strange
+
+Solved
+~~~~~~
+2020.06.15
+- Minor bugfix
+2015.04.12
+- Settings the length of list of chords
+2015.03.01
+- save the new chord
+- set the pitches
+- Write out the notes from the pitch of string
+- Using the default color and the other colors too.[rgb2]
+- can use the seven strings guitar
+- bugfixes 
+2015.02.22
+- When shows a chord write out the name of chord too
+- Settings page tabs
+- Settings lists with pager
+- Config page - sortable tables
+
+2015.02.21
+- Arrows up and arrows down shows with written graphic
+- Delete actual record from table in config page
+- Default accords and instruments upload to database at install 
+
+2015.02.20
+- Shows the chords
+
+2015.02.13
+- More instrument and more tunings from the database
+- Other instruments (4 strings, 5 strings and6 strings)
+
+2015.02.08
+- One stringmore notes
+- PHP 5.3.x - bug in showing
+
+2015.02.07
+- Shows neck of guitar and the notes of chord 

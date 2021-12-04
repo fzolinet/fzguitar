@@ -1,0 +1,137 @@
+<?php
+
+/**
+ * Implementation os hook_requirement()
+ * @param unknown $phase
+ */
+function fzguitar_requirement($phase)
+{
+	$req = array();
+	$is_gd = function_exists("gd_info");
+	if(!is_gd){
+		$req['fzguitar']['GD'] = array(
+			'title' => t('GD module is not avaliable'),
+			'description' => 'When GD module is not avaliable resizing of images does not works!',
+			'severity' => REQUIREMENT_ERROR,
+		);
+	}
+	return $req;
+}
+/**
+ * Implementation of hook_schema().
+ */
+
+function fzguitar_schema() {
+
+//table of chords
+  $schema['fzguitar'] = array(
+    'description' => t('Table for FZ Guitar Chords.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('ID of Chords.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'size' => 'normal',
+      ),
+      'pitchID' => array(
+            'description' => t('ID of Instrument and pitch'),
+            'type' => 'varchar',
+            'length' => 255,
+            'not null' => FALSE,
+            'default' => '',
+        ),
+      'name' => array(
+        'description' => t('Name of Chord'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ),
+      'tones' => array(
+        'description' => t('Tones of chord'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' =>array(
+    	'name' => array('name'),
+     )
+  );
+
+  // table of instruments and tunes
+  $schema['fzguitar_pitch'] = array(
+      'description' => t('Table for Pitch of guitars.'),
+      'fields' => array(
+          'ID' => array(
+              'description' => t('ID of Chords.'),
+              'type' => 'varchar',
+              'length' => 255,
+              'not null' => TRUE,
+          ),
+          'descr' => array(
+              'description' => t('Desctiption of instrument'),
+              'type' => 'varchar',
+              'length' => 255,
+              'not null' => False,
+          ),
+          'pitch' => array(
+              'description' => t('Pitch of instrument'),
+              'type' => 'varchar',
+              'length' => 255,
+              'not null' => FALSE,
+              'default' => '',
+          ),
+      ),
+      'primary key' => array('ID'),
+  );
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function fzguitar_install() {
+ 	variable_set('menu_rebuild_needed', TRUE);
+ 	//
+ 	variable_set('fzguitar_chord',True);
+ 	variable_set('fzguitar_noteaut',false);
+ 	variable_set('fzguitar_finger',false);
+ 	variable_set('fzguitar_picking',false);
+ 	variable_set('fzguitar_rgb1','#000080');
+ 	variable_set('fzguitar_rgb2','#800000');
+ 	variable_set('fzguitar_chord_length',10);
+ 	//
+ 	require('fzguitar_table.php');
+ 	$fzguitar = fzguitar_table();
+ 	for($i=0;$i< count($fzguitar);$i++){
+ 	    $row = $fzguitar[$i];
+ 	    $row['ID'] =$i;
+ 	    drupal_write_record('fzguitar',$row);
+ 	}
+ 	//
+ 	require("fzguitar_pitch_table.php");
+ 	$fzguitar_pitch = fzguitar_pitch_table();
+ 	for($i=0;$i< count( $fzguitar_pitch );$i++){
+ 	    $row = $fzguitar_pitch[$i];
+ 	    drupal_write_record('fzguitar',$row);
+ 	}
+ 	drupal_set_message(t('FZ Guitar Chords'));
+}
+
+/**
+ * Uninstall function of fzguitar
+ */
+function fzguitar_uninstall(){
+	drupal_uninstall_schema('fzguitar');
+	variable_del('fzguitar_chord');
+	variable_del('fzguitar_noteaut');
+	variable_del('fzguitar_rgb1');
+	variable_del('fzguitar_rgb2');
+	variable_del('fzguitar_chord_length');
+  drupal_set_message(t('FZ Guitar module has been uninstalled'));
+  variable_set('menu_rebuild_needed', TRUE);
+}
